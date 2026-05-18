@@ -57,8 +57,27 @@ app.get("/search/:topic", (req, res) => {
 });
 
 
-// TODO: Implement GET /info/:id
-// This API should read catalog.csv and return details of one book.
+// GET /info/:id
+// Example: /info/2
+// Returns full details of one book
+app.get("/info/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const books = readCatalog();
+
+    const book = books.find(book => book.id === id);
+
+    if (!book) {
+        return res.status(404).json({
+            error: "Book not found"
+        });
+    }
+
+    res.json({
+        title: book.title,
+        quantity: book.quantity,
+        price: book.price
+    });
+});
 
 // TODO: Implement PUT /update/:id
 // This API should update quantity or price in catalog.csv.
