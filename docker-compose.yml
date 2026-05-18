@@ -14,7 +14,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./catalog-service/data:/app/data
+      - ./catalog-service/data:/app/data:Z
 
   order:
     build: ./order-service
@@ -22,6 +22,6 @@ services:
     ports:
       - "3002:3002"
     volumes:
-      - ./order-service/data:/app/data
+      - ./order-service/data:/app/data:Z
     depends_on:
       - catalog
