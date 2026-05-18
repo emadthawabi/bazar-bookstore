@@ -34,6 +34,17 @@ function readCatalog() {
     return books;
 }
 
+// This function writes the updated books array back to catalog.csv
+function writeCatalog(books) {
+    let csv = "id,title,topic,quantity,price\n";
+
+    for (const book of books) {
+        csv += `${book.id},${book.title},${book.topic},${book.quantity},${book.price}\n`;
+    }
+
+    fs.writeFileSync(catalogFilePath, csv);
+}
+
 // Test route to check if catalog service is running
 app.get("/", (req, res) => {
     res.json({ service: "Catalog Service", status: "running" });
@@ -76,6 +87,49 @@ app.get("/info/:id", (req, res) => {
         title: book.title,
         quantity: book.quantity,
         price: book.price
+    });
+});
+
+// PUT /update/:id
+// Updates book quantity or price in catalog.csv
+app.put("/update/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const books = readCatalog();
+
+    const book = books.find(book => book.id === id);
+
+    if (!book) {
+        return res.status(404).json({
+            error: "Book not found"
+        });
+    }
+
+    // Update price if sent in request body
+    if (req.body.price !== undefined) {
+        book.price = Number(req.body.price);
+    }
+
+    // Update quantity directly if sent
+    if (req.body.quantity !== undefined) {
+        book.quantity = Number(req.body.quantity);
+    }
+
+    // Increase or decrease quantity using quantityDelta
+    if (req.body.quantityDelta !== undefined) {
+        book.quantity += Number(req.body.quantityDelta);
+    }
+
+    if (book.quantity < 0) {
+        return res.status(400).json({
+            error: "Quantity cannot be negative"
+        });
+    }
+
+    writeCatalog(books);
+
+    res.json({
+        message: "Book updated successfully",
+        book: book
     });
 });
 
