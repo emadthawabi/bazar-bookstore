@@ -1,0 +1,96 @@
+docker compose up --build -d
+
+Catalog service running on port 3001
+Frontend service running on port 3000
+Order service running on port 3002
+
+
+Search Request:
+http://localhost:3000/search/distributedsystems
+
+Returned Result:
+[
+  {
+    "id": 1,
+    "title": "How to get a good grade in DOS in 40 minutes a day"
+  },
+  {
+    "id": 2,
+    "title": "RPCs for Noobs"
+  }
+]
+
+
+Info Request:
+http://localhost:3000/info/2
+
+Returned Result:
+{
+  "title": "RPCs for Noobs",
+  "quantity": 5,
+  "price": 50
+}
+
+
+Purchase Request:
+POST http://localhost:3000/purchase/2
+
+Returned Result:
+{
+  "message": "bought book RPCs for Noobs",
+  "itemId": 2,
+  "price": 50
+}
+
+
+Info Request After Purchase:
+http://localhost:3000/info/2
+
+Returned Result:
+{
+  "title": "RPCs for Noobs",
+  "quantity": 4,
+  "price": 50
+}
+
+
+
+
+
+
+
+Repeated Purchase Requests:
+POST http://localhost:3000/purchase/2
+
+Returned Result:
+{
+  "message": "bought book RPCs for Noobs",
+  "itemId": 2,
+  "price": 50
+}
+
+POST http://localhost:3000/purchase/2
+
+Returned Result:
+{
+  "message": "bought book RPCs for Noobs",
+  "itemId": 2,
+  "price": 50
+}
+
+POST http://localhost:3000/purchase/2
+
+Returned Result:
+{
+  "error": "Book is out of stock"
+}
+
+
+http://localhost:3000/info/2
+
+Returned Result:
+{
+  "title": "RPCs for Noobs",
+  "quantity": 0,
+  "price": 50
+}
