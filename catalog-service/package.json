@@ -1,0 +1,15 @@
+{
+    "name": "catalog-service",
+    "version": "1.0.0",
+    "main": "server.js",
+    "type": "commonjs",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.6",
+        "csv-parser": "^3.2.1",
+        "csv-writer": "^1.6.0",
+        "express": "^5.2.1"
+    }
+}
