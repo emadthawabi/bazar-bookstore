@@ -12,17 +12,91 @@ app.use(express.json());
 const ordersFilePath = path.join(__dirname, "data", "orders.csv");
 const CATALOG_SERVICE_URL = "http://catalog:3001";
 
-// TODO: Implement POST /purchase/:id
-// This API should:
-// 1. Ask catalog service for book info.
-// 2. Check if quantity > 0.
-// 3. Ask catalog service to decrease quantity.
-// 4. Save the order in orders.csv.
-// 5. Return success or error message.
+// Returns the next order id
+function getNextOrderId() {
+    const data = fs.readFileSync(ordersFilePath, "utf8").trim();
+
+    const lines = data.split("\n");
+
+    if (lines.length === 1) {
+        return 1;
+    }
+
+    const lastLine = lines[lines.length - 1];
+    const lastOrderId = Number(lastLine.split(",")[0]);
+
+    return lastOrderId + 1;
+}
+
+// Saves a new order in orders.csv
+function saveOrder(itemId, title, price) {
+    const orderId = getNextOrderId();
+
+    const date = new Date().toISOString();
+
+    const newOrder =
+        `${orderId},${itemId},${title},${price},${date}\n`;
+
+    fs.appendFileSync(ordersFilePath, newOrder);
+}
 
 app.get("/", (req, res) => {
     res.json({ service: "Order Service", status: "running" });
 });
+
+// POST /purchase/:id
+// Buys a book if quantity is available
+app.post("/purchase/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        // Ask catalog service for book info
+        const infoResponse =
+            await fetch(`${CATALOG_SERVICE_URL}/info/${id}`);
+
+        if (!infoResponse.ok) {
+            return res.status(404).json({
+                error: "Book not found"
+            });
+        }
+
+        const book = await infoResponse.json();
+
+        // Check stock
+        if (book.quantity <= 0) {
+            return res.status(400).json({
+                error: "Book is out of stock"
+            });
+        }
+
+        // Decrease quantity by 1
+        await fetch(`${CATALOG_SERVICE_URL}/update/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                quantityDelta: -1
+            })
+        });
+
+        // Save order in CSV
+        saveOrder(id, book.title, book.price);
+
+        // Success response
+        res.json({
+            message: `bought book ${book.title}`,
+            price: book.price
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            error: "Purchase failed",
+            details: error.message
+        });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Order service running on port ${PORT}`);
