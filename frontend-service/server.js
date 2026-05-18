@@ -28,8 +28,23 @@ app.get("/search/:topic", async (req, res) => {
     }
 });
 
-// TODO: Implement GET /info/:id
-// This API should forward the request to catalog service.
+// GET /info/:id
+// This API forwards the request to catalog service.
+app.get("/info/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const response = await fetch(`${CATALOG_SERVICE_URL}/info/${id}`);
+        const data = await response.json();
+
+        res.status(response.status).json(data);
+    } catch (error) {
+        res.status(500).json({
+            error: "Frontend could not connect to catalog service",
+            details: error.message
+        });
+    }
+});
 
 // TODO: Implement POST /purchase/:id
 // This API should forward the request to order service.
