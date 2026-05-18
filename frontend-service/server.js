@@ -46,8 +46,7 @@ app.get("/info/:id", async (req, res) => {
     }
 });
 
-// TODO: Implement POST /purchase/:id
-// This API should forward the request to order service.
+
 
 app.get("/", (req, res) => {
     res.json({ service: "Frontend Service", status: "running" });
