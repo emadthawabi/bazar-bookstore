@@ -53,6 +53,27 @@ app.get("/", (req, res) => {
     res.json({ service: "Frontend Service", status: "running" });
 });
 
+// POST /purchase/:id
+// Forward purchase request to order service
+app.post("/purchase/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const response = await fetch(`${ORDER_SERVICE_URL}/purchase/${id}`, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        res.status(response.status).json(data);
+    } catch (error) {
+        res.status(500).json({
+            error: "Frontend could not connect to order service",
+            details: error.message
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Frontend service running on port ${PORT}`);
 });
