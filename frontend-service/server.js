@@ -17,17 +17,37 @@ const ORDER_REPLICAS = [
     "http://order2:3002"
 ];
 
+let catalogIndex = 0;
+let orderIndex = 0;
 
-const CATALOG_SERVICE_URL = CATALOG_REPLICAS[0];
-const ORDER_SERVICE_URL = ORDER_REPLICAS[0];
+// Round-robin: choose catalog1, then catalog2, then repeat
+function getNextCatalogReplica() {
+    const replica = CATALOG_REPLICAS[catalogIndex];
+    catalogIndex = (catalogIndex + 1) % CATALOG_REPLICAS.length;
+    return replica;
+}
+
+// Round-robin: choose order1, then order2, then repeat
+function getNextOrderReplica() {
+    const replica = ORDER_REPLICAS[orderIndex];
+    orderIndex = (orderIndex + 1) % ORDER_REPLICAS.length;
+    return replica;
+}
+
+app.get("/", (req, res) => {
+    res.json({ service: "Frontend Service", status: "running" });
+});
 
 // GET /search/:topic
-// This API forwards the request to catalog service.
+// Forwards search requests to catalog replicas using round-robin
 app.get("/search/:topic", async (req, res) => {
     try {
         const topic = req.params.topic;
+        const catalogUrl = getNextCatalogReplica();
 
-        const response = await fetch(`${CATALOG_SERVICE_URL}/search/${topic}`);
+        console.log(`Forwarding search request to ${catalogUrl}`);
+
+        const response = await fetch(`${catalogUrl}/search/${topic}`);
         const data = await response.json();
 
         res.status(response.status).json(data);
@@ -40,12 +60,15 @@ app.get("/search/:topic", async (req, res) => {
 });
 
 // GET /info/:id
-// This API forwards the request to catalog service.
+// Forwards info requests to catalog replicas using round-robin
 app.get("/info/:id", async (req, res) => {
     try {
         const id = req.params.id;
+        const catalogUrl = getNextCatalogReplica();
 
-        const response = await fetch(`${CATALOG_SERVICE_URL}/info/${id}`);
+        console.log(`Forwarding info request to ${catalogUrl}`);
+
+        const response = await fetch(`${catalogUrl}/info/${id}`);
         const data = await response.json();
 
         res.status(response.status).json(data);
@@ -57,19 +80,16 @@ app.get("/info/:id", async (req, res) => {
     }
 });
 
-
-
-app.get("/", (req, res) => {
-    res.json({ service: "Frontend Service", status: "running" });
-});
-
 // POST /purchase/:id
-// Forward purchase request to order service
+// Forwards purchase requests to order replicas using round-robin
 app.post("/purchase/:id", async (req, res) => {
     try {
         const id = req.params.id;
+        const orderUrl = getNextOrderReplica();
 
-        const response = await fetch(`${ORDER_SERVICE_URL}/purchase/${id}`, {
+        console.log(`Forwarding purchase request to ${orderUrl}`);
+
+        const response = await fetch(`${orderUrl}/purchase/${id}`, {
             method: "POST"
         });
 
