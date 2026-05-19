@@ -20,14 +20,18 @@ const ORDER_REPLICAS = [
 let catalogIndex = 0;
 let orderIndex = 0;
 
-// Round-robin: choose catalog1, then catalog2, then repeat
+// Simple in-memory cache.
+// It will be cleared if the frontend container restarts.
+const cache = {};
+
+// Round-robin for catalog replicas
 function getNextCatalogReplica() {
     const replica = CATALOG_REPLICAS[catalogIndex];
     catalogIndex = (catalogIndex + 1) % CATALOG_REPLICAS.length;
     return replica;
 }
 
-// Round-robin: choose order1, then order2, then repeat
+// Round-robin for order replicas
 function getNextOrderReplica() {
     const replica = ORDER_REPLICAS[orderIndex];
     orderIndex = (orderIndex + 1) % ORDER_REPLICAS.length;
@@ -39,16 +43,28 @@ app.get("/", (req, res) => {
 });
 
 // GET /search/:topic
-// Forwards search requests to catalog replicas using round-robin
+// Search requests are cached because they are read-only.
 app.get("/search/:topic", async (req, res) => {
     try {
-        const topic = req.params.topic;
-        const catalogUrl = getNextCatalogReplica();
+        const topic = req.params.topic.toLowerCase();
+        const cacheKey = `search:${topic}`;
 
+        if (cache[cacheKey]) {
+            console.log(`Cache HIT for ${cacheKey}`);
+            return res.json(cache[cacheKey]);
+        }
+
+        console.log(`Cache MISS for ${cacheKey}`);
+
+        const catalogUrl = getNextCatalogReplica();
         console.log(`Forwarding search request to ${catalogUrl}`);
 
         const response = await fetch(`${catalogUrl}/search/${topic}`);
         const data = await response.json();
+
+        if (response.ok) {
+            cache[cacheKey] = data;
+        }
 
         res.status(response.status).json(data);
     } catch (error) {
@@ -60,16 +76,28 @@ app.get("/search/:topic", async (req, res) => {
 });
 
 // GET /info/:id
-// Forwards info requests to catalog replicas using round-robin
+// Info requests are cached because they are read-only.
 app.get("/info/:id", async (req, res) => {
     try {
         const id = req.params.id;
-        const catalogUrl = getNextCatalogReplica();
+        const cacheKey = `info:${id}`;
 
+        if (cache[cacheKey]) {
+            console.log(`Cache HIT for ${cacheKey}`);
+            return res.json(cache[cacheKey]);
+        }
+
+        console.log(`Cache MISS for ${cacheKey}`);
+
+        const catalogUrl = getNextCatalogReplica();
         console.log(`Forwarding info request to ${catalogUrl}`);
 
         const response = await fetch(`${catalogUrl}/info/${id}`);
         const data = await response.json();
+
+        if (response.ok) {
+            cache[cacheKey] = data;
+        }
 
         res.status(response.status).json(data);
     } catch (error) {
@@ -81,7 +109,7 @@ app.get("/info/:id", async (req, res) => {
 });
 
 // POST /purchase/:id
-// Forwards purchase requests to order replicas using round-robin
+// Purchase is a write operation, so it is not cached.
 app.post("/purchase/:id", async (req, res) => {
     try {
         const id = req.params.id;
