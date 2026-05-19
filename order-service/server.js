@@ -9,8 +9,10 @@ const PORT = 3002;
 app.use(cors());
 app.use(express.json());
 
-const ordersFilePath = path.join(__dirname, "data", "orders.csv");
-const CATALOG_SERVICE_URL = "http://catalog:3001";
+const ordersFileName = process.env.ORDERS_FILE || "orders.csv";
+const ordersFilePath = path.join(__dirname, "data", ordersFileName);
+
+const CATALOG_SERVICE_URL = process.env.CATALOG_SERVICE_URL || "http://catalog1:3001";
 
 // Returns the next order id
 function getNextOrderId() {

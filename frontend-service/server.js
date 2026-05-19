@@ -7,8 +7,19 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-const CATALOG_SERVICE_URL = "http://catalog:3001";
-const ORDER_SERVICE_URL = "http://order:3002";
+const CATALOG_REPLICAS = [
+    "http://catalog1:3001",
+    "http://catalog2:3001"
+];
+
+const ORDER_REPLICAS = [
+    "http://order1:3002",
+    "http://order2:3002"
+];
+
+
+const CATALOG_SERVICE_URL = CATALOG_REPLICAS[0];
+const ORDER_SERVICE_URL = ORDER_REPLICAS[0];
 
 // GET /search/:topic
 // This API forwards the request to catalog service.
