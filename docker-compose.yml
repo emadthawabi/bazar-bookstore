@@ -5,23 +5,53 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - catalog
-      - order
+      - catalog1
+      - catalog2
+      - order1
+      - order2
 
-  catalog:
+  catalog1:
     build: ./catalog-service
-    container_name: bazar_catalog
+    container_name: bazar_catalog1
     ports:
       - "3001:3001"
+    environment:
+      - CATALOG_FILE=catalog1.csv
     volumes:
       - ./catalog-service/data:/app/data:Z
 
-  order:
+  catalog2:
+    build: ./catalog-service
+    container_name: bazar_catalog2
+    ports:
+      - "3003:3001"
+    environment:
+      - CATALOG_FILE=catalog2.csv
+    volumes:
+      - ./catalog-service/data:/app/data:Z
+
+  order1:
     build: ./order-service
-    container_name: bazar_order
+    container_name: bazar_order1
     ports:
       - "3002:3002"
+    environment:
+      - ORDERS_FILE=orders1.csv
     volumes:
       - ./order-service/data:/app/data:Z
     depends_on:
-      - catalog
+      - catalog1
+      - catalog2
+
+  order2:
+    build: ./order-service
+    container_name: bazar_order2
+    ports:
+      - "3004:3002"
+    environment:
+      - ORDERS_FILE=orders2.csv
+    volumes:
+      - ./order-service/data:/app/data:Z
+    depends_on:
+      - catalog1
+      - catalog2

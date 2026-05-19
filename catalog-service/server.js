@@ -9,7 +9,8 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-const catalogFilePath = path.join(__dirname, "data", "catalog.csv");
+const catalogFileName = process.env.CATALOG_FILE || "catalog.csv";
+const catalogFilePath = path.join(__dirname, "data", catalogFileName);
 
 // This function reads catalog.csv and converts it to an array of book objects
 function readCatalog() {
@@ -133,8 +134,7 @@ app.put("/update/:id", (req, res) => {
     });
 });
 
-// TODO: Implement PUT /update/:id
-// This API should update quantity or price in catalog.csv.
+
 
 app.listen(PORT, () => {
     console.log(`Catalog service running on port ${PORT}`);
