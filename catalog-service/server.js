@@ -8,6 +8,7 @@ const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
+const REPLICA_SYNC_URL = process.env.REPLICA_SYNC_URL || "";
 
 const catalogFileName = process.env.CATALOG_FILE || "catalog.csv";
 const catalogFilePath = path.join(__dirname, "data", catalogFileName);
@@ -93,7 +94,7 @@ app.get("/info/:id", (req, res) => {
 
 // PUT /update/:id
 // Updates book quantity or price in catalog.csv
-app.put("/update/:id", (req, res) => {
+app.put("/update/:id", async (req, res) => {
     const id = Number(req.params.id);
     const books = readCatalog();
 
@@ -127,6 +128,22 @@ app.put("/update/:id", (req, res) => {
     }
 
     writeCatalog(books);
+
+    // Sync this update to the other catalog replica
+    if (REPLICA_SYNC_URL && !req.body.fromReplica) {
+        await fetch(`${REPLICA_SYNC_URL}/update/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                price: req.body.price,
+                quantity: req.body.quantity,
+                quantityDelta: req.body.quantityDelta,
+                fromReplica: true
+            })
+        });
+    }
 
     res.json({
         message: "Book updated successfully",
