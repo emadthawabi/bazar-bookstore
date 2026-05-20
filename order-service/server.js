@@ -9,6 +9,8 @@ const PORT = 3002;
 app.use(cors());
 app.use(express.json());
 
+const FRONTEND_SERVICE_URL = "http://frontend:3000";
+
 const ordersFileName = process.env.ORDERS_FILE || "orders.csv";
 const ordersFilePath = path.join(__dirname, "data", ordersFileName);
 
@@ -70,6 +72,11 @@ app.post("/purchase/:id", async (req, res) => {
                 error: "Book is out of stock"
             });
         }
+
+                // Invalidate frontend cache before updating catalog
+        await fetch(`${FRONTEND_SERVICE_URL}/cache/${id}`, {
+            method: "DELETE"
+        });
 
         // Decrease quantity by 1
         await fetch(`${CATALOG_SERVICE_URL}/update/${id}`, {

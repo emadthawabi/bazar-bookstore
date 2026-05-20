@@ -17,8 +17,9 @@ services:
       - "3001:3001"
     environment:
       - CATALOG_FILE=catalog1.csv
+      - REPLICA_SYNC_URL=http://catalog2:3001
     volumes:
-      - ./catalog-service/data:/app/data:Z
+      - ./catalog-service/data/catalog1.csv:/app/data/catalog1.csv:Z
 
   catalog2:
     build: ./catalog-service
@@ -27,8 +28,9 @@ services:
       - "3003:3001"
     environment:
       - CATALOG_FILE=catalog2.csv
+      - REPLICA_SYNC_URL=http://catalog1:3001
     volumes:
-      - ./catalog-service/data:/app/data:Z
+      - ./catalog-service/data/catalog2.csv:/app/data/catalog2.csv:Z
 
   order1:
     build: ./order-service
@@ -37,8 +39,10 @@ services:
       - "3002:3002"
     environment:
       - ORDERS_FILE=orders1.csv
+      - CATALOG_SERVICE_URL=http://catalog1:3001
+      - FRONTEND_SERVICE_URL=http://frontend:3000
     volumes:
-      - ./order-service/data:/app/data:Z
+      - ./order-service/data/orders1.csv:/app/data/orders1.csv:Z
     depends_on:
       - catalog1
       - catalog2
@@ -50,8 +54,10 @@ services:
       - "3004:3002"
     environment:
       - ORDERS_FILE=orders2.csv
+      - CATALOG_SERVICE_URL=http://catalog2:3001
+      - FRONTEND_SERVICE_URL=http://frontend:3000
     volumes:
-      - ./order-service/data:/app/data:Z
+      - ./order-service/data/orders2.csv:/app/data/orders2.csv:Z
     depends_on:
       - catalog1
       - catalog2

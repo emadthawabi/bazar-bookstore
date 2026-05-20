@@ -132,6 +132,34 @@ app.post("/purchase/:id", async (req, res) => {
     }
 });
 
+// DELETE /cache/:id
+// Removes cached info for one book after purchase/update
+app.delete("/cache/:id", (req, res) => {
+    const id = req.params.id;
+
+    delete cache[`info:${id}`];
+
+    console.log(`Cache invalidated for info:${id}`);
+
+    res.json({
+        message: `Cache invalidated for book ${id}`
+    });
+});
+
+// DELETE /cache/:id
+// Removes cached info for one book after purchase/update
+app.delete("/cache/:id", (req, res) => {
+    const id = req.params.id;
+
+    delete cache[`info:${id}`];
+
+    console.log(`Cache invalidated for info:${id}`);
+
+    res.json({
+        message: `Cache invalidated for book ${id}`
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Frontend service running on port ${PORT}`);
 });
