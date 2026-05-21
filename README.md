@@ -322,4 +322,4 @@ docs/performance-results.txt
 # Authors
 
 - Emad Thawabi
-- Atout
+- AbdAlruhman Atout
