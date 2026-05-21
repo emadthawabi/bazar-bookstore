@@ -1,41 +1,51 @@
-Bazar Bookstore
+# Bazar Bookstore
 
 Distributed online bookstore system built using:
 
-JavaScript
-Node.js
-Express.js
-Docker
-Docker Compose
-CSV-based storage
+- JavaScript
+- Node.js
+- Express.js
+- Docker
+- Docker Compose
+- CSV-based storage
 
 The project was implemented as part of a Distributed Systems laboratory project.
 
-Project Overview
+---
+
+# Project Overview
 
 Bazar Bookstore is a microservices-based bookstore system composed of multiple independent services communicating through HTTP APIs.
 
 The system supports:
 
-Book searching
-Viewing book information
-Purchasing books
-Replication
-Load balancing
-Caching
-Cache invalidation
-Replica synchronization
+- Book searching
+- Viewing book information
+- Purchasing books
+- Replication
+- Load balancing
+- Caching
+- Cache invalidation
+- Replica synchronization
 
 The system uses Docker containers for deployment and Docker Compose for orchestration.
 
-Technologies Used
-Node.js
-Express.js
-Docker
-Docker Compose
-CSV file storage
-Git & GitHub
-Project Structure
+---
+
+# Technologies Used
+
+- Node.js
+- Express.js
+- Docker
+- Docker Compose
+- CSV file storage
+- Git & GitHub
+
+---
+
+# Project Structure
+
+```text
 bazar-bookstore/
 │
 ├── frontend-service/
@@ -67,201 +77,249 @@ bazar-bookstore/
 ├── docker-compose.yml
 ├── README.md
 └── .gitignore
-System Architecture
-Frontend Service
+```
+
+---
+
+# System Architecture
+
+## Frontend Service
 
 Port:
 
+```text
 3000
+```
 
 Responsibilities:
 
-Receives client requests
-Performs load balancing
-Handles caching
-Invalidates stale cache entries
-Forwards requests to replicas
-Catalog Service
+- Receives client requests
+- Performs load balancing
+- Handles caching
+- Invalidates stale cache entries
+- Forwards requests to replicas
+
+---
+
+## Catalog Service
 
 Replicas:
 
+```text
 catalog1 → port 3001
 catalog2 → port 3003
+```
 
 Responsibilities:
 
-Store books
-Handle search requests
-Handle info requests
-Synchronize updates between replicas
+- Store books
+- Handle search requests
+- Handle info requests
+- Synchronize updates between replicas
 
 CSV files:
 
+```text
 catalog1.csv
 catalog2.csv
-Order Service
+```
+
+---
+
+## Order Service
 
 Replicas:
 
+```text
 order1 → port 3002
 order2 → port 3004
+```
 
 Responsibilities:
 
-Handle purchase requests
-Save orders
-Update catalog quantity
-Trigger cache invalidation
+- Handle purchase requests
+- Save orders
+- Update catalog quantity
+- Trigger cache invalidation
 
 CSV files:
 
+```text
 orders1.csv
 orders2.csv
-Features
-Book Search
+```
 
-Users can search books by topic.
+---
 
-Example:
+# Features
 
-GET /search/distributedsystems
-Book Information
-
-Users can retrieve detailed information about a book.
-
-Example:
-
-GET /info/2
-Purchase Books
-
-Users can purchase books.
-
-Example:
-
-POST /purchase/2
-Replication
+## Replication
 
 The project uses replicated catalog and order services:
 
+```text
 catalog1 / catalog2
 order1 / order2
+```
 
 Each replica uses separate CSV storage files.
 
-Load Balancing
+---
+
+## Load Balancing
 
 Frontend implements round-robin load balancing.
 
 Example:
 
+```text
 Request 1 → catalog1
 Request 2 → catalog2
 Request 3 → catalog1
+```
 
-The same strategy is used for order replicas.
+---
 
-Caching
+## Caching
 
 Frontend caches:
 
+```text
 GET /info/:id
 GET /search/:topic
+```
 
 This improves performance for repeated read requests.
 
-Cache Invalidation
+---
+
+## Cache Invalidation
 
 After a purchase operation:
 
+```text
 POST /purchase/:id
+```
 
-the frontend invalidates stale cached data to ensure updated quantities are returned.
+the frontend invalidates stale cached data.
 
-Replica Synchronization
+---
+
+## Replica Synchronization
 
 When one catalog replica is updated, the second replica is automatically synchronized.
 
 This keeps:
 
+```text
 catalog1.csv
 catalog2.csv
+```
 
 consistent.
 
-Docker Deployment
+---
+
+# Docker Deployment
 
 The entire system runs using Docker Compose.
 
-Running the Project
-Requirements
+---
+
+# Running the Project
+
+## Requirements
 
 Install:
 
-Docker
-Docker Compose
-Start the System
+- Docker
+- Docker Compose
+
+---
+
+## Start the System
+
+```bash
 docker compose up --build -d
-Stop the System
+```
+
+---
+
+## Stop the System
+
+```bash
 docker compose down
-API Endpoints
-Search Books
+```
+
+---
+
+# API Endpoints
+
+## Search Books
+
+```http
 GET /search/:topic
+```
 
 Example:
 
+```text
 http://localhost:3000/search/distributedsystems
-Book Information
+```
+
+---
+
+## Book Information
+
+```http
 GET /info/:id
+```
 
 Example:
 
+```text
 http://localhost:3000/info/2
-Purchase Book
+```
+
+---
+
+## Purchase Book
+
+```http
 POST /purchase/:id
+```
 
 Example:
 
+```bash
 curl -X POST http://localhost:3000/purchase/2
-Ports
-Service	Port
-Frontend	3000
-Catalog Replica 1	3001
-Catalog Replica 2	3003
-Order Replica 1	3002
-Order Replica 2	3004
-Performance Results
+```
+
+---
+
+# Ports
+
+| Service | Port |
+|---|---|
+| Frontend | 3000 |
+| Catalog Replica 1 | 3001 |
+| Catalog Replica 2 | 3003 |
+| Order Replica 1 | 3002 |
+| Order Replica 2 | 3004 |
+
+---
+
+# Performance Results
 
 Performance measurements are available in:
 
+```text
 docs/performance-results.txt
+```
 
-The experiments show that caching significantly improves repeated read request performance.
+---
 
-Example Workflow
-Search Books
-GET /search/distributedsystems
+# Authors
 
-Result:
-
-[
-  {
-    "id": 1,
-    "title": "How to get a good grade in DOS in 40 minutes a day"
-  },
-  {
-    "id": 2,
-    "title": "RPCs for Noobs"
-  }
-]
-Purchase Book
-POST /purchase/2
-
-Result:
-
-{
-  "message": "bought book RPCs for Noobs",
-  "price": 50
-}
-Authors
-Emad Thawabi
-AbdAlruhman Atout
+- Emad Thawabi
+- Atout
