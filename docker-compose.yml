@@ -41,6 +41,7 @@ services:
       - ORDERS_FILE=orders1.csv
       - CATALOG_SERVICE_URL=http://catalog1:3001
       - FRONTEND_SERVICE_URL=http://frontend:3000
+      - ORDER_SYNC_URL=http://order2:3002
     volumes:
       - ./order-service/data/orders1.csv:/app/data/orders1.csv:Z
     depends_on:
@@ -56,6 +57,7 @@ services:
       - ORDERS_FILE=orders2.csv
       - CATALOG_SERVICE_URL=http://catalog2:3001
       - FRONTEND_SERVICE_URL=http://frontend:3000
+      - ORDER_SYNC_URL=http://order1:3002
     volumes:
       - ./order-service/data/orders2.csv:/app/data/orders2.csv:Z
     depends_on:
