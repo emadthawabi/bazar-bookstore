@@ -9,17 +9,17 @@ const PORT = 3002;
 app.use(cors());
 app.use(express.json());
 
-const FRONTEND_SERVICE_URL = "http://frontend:3000";
+const FRONTEND_SERVICE_URL = process.env.FRONTEND_SERVICE_URL || "http://frontend:3000";
+const CATALOG_SERVICE_URL = process.env.CATALOG_SERVICE_URL || "http://catalog1:3001";
+
+const ORDER_SYNC_URL = process.env.ORDER_SYNC_URL || "";
 
 const ordersFileName = process.env.ORDERS_FILE || "orders.csv";
 const ordersFilePath = path.join(__dirname, "data", ordersFileName);
 
-const CATALOG_SERVICE_URL = process.env.CATALOG_SERVICE_URL || "http://catalog1:3001";
-
 // Returns the next order id
 function getNextOrderId() {
     const data = fs.readFileSync(ordersFilePath, "utf8").trim();
-
     const lines = data.split("\n");
 
     if (lines.length === 1) {
@@ -32,14 +32,27 @@ function getNextOrderId() {
     return lastOrderId + 1;
 }
 
-// Saves a new order in orders.csv
+// Saves a new order in this replica CSV file
 function saveOrder(itemId, title, price) {
     const orderId = getNextOrderId();
-
     const date = new Date().toISOString();
 
-    const newOrder =
-        `${orderId},${itemId},${title},${price},${date}\n`;
+    const newOrder = `${orderId},${itemId},${title},${price},${date}\n`;
+
+    fs.appendFileSync(ordersFilePath, newOrder);
+
+    return {
+        orderId,
+        itemId,
+        title,
+        price,
+        date
+    };
+}
+
+// Saves an order that came from the other replica
+function saveSyncedOrder(order) {
+    const newOrder = `${order.orderId},${order.itemId},${order.title},${order.price},${order.date}\n`;
 
     fs.appendFileSync(ordersFilePath, newOrder);
 }
@@ -55,8 +68,7 @@ app.post("/purchase/:id", async (req, res) => {
         const id = req.params.id;
 
         // Ask catalog service for book info
-        const infoResponse =
-            await fetch(`${CATALOG_SERVICE_URL}/info/${id}`);
+        const infoResponse = await fetch(`${CATALOG_SERVICE_URL}/info/${id}`);
 
         if (!infoResponse.ok) {
             return res.status(404).json({
@@ -73,7 +85,7 @@ app.post("/purchase/:id", async (req, res) => {
             });
         }
 
-                // Invalidate frontend cache before updating catalog
+        // Invalidate frontend cache before updating catalog
         await fetch(`${FRONTEND_SERVICE_URL}/cache/${id}`, {
             method: "DELETE"
         });
@@ -89,10 +101,20 @@ app.post("/purchase/:id", async (req, res) => {
             })
         });
 
-        // Save order in CSV
-        saveOrder(id, book.title, book.price);
+        // Save order locally
+        const savedOrder = saveOrder(id, book.title, book.price);
 
-        // Success response
+        // Sync order to the other order replica
+        if (ORDER_SYNC_URL) {
+            await fetch(`${ORDER_SYNC_URL}/sync-order`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(savedOrder)
+            });
+        }
+
         res.json({
             message: `bought book ${book.title}`,
             price: book.price
@@ -106,6 +128,22 @@ app.post("/purchase/:id", async (req, res) => {
     }
 });
 
+// POST /sync-order
+// Receives an order from the other order replica and saves it
+app.post("/sync-order", (req, res) => {
+    try {
+        saveSyncedOrder(req.body);
+
+        res.json({
+            message: "Order synced successfully"
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Order sync failed",
+            details: error.message
+        });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Order service running on port ${PORT}`);
